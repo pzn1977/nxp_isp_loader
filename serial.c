@@ -288,6 +288,29 @@ void serial_discard (serial_t * self, int max) {
   } while (i);
 }
 
+unsigned int serial_bps (int bps) {
+  switch (bps) {
+  case 1200:
+    return SERIAL_1200BPS;
+  case 2400:
+    return SERIAL_2400BPS;
+  case 4800:
+    return SERIAL_4800BPS;
+  case 9600:
+    return SERIAL_9600BPS;
+  case 19200:
+    return SERIAL_19200BPS;
+  case 38400:
+    return SERIAL_38400BPS;
+  case 57600:
+    return SERIAL_57600BPS;
+  case 115200:
+    return SERIAL_115200BPS;
+  default:
+    return 0;
+  }
+}
+
 #ifdef SERIAL_TEST
 int main() {
   serial_t * st;

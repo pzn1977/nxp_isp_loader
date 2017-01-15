@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "assure.h"
 #include "serial.h"
 #include "nxp_encode.h"
 #include "chip.h"
@@ -51,33 +50,32 @@ int recv_line (serial_t * dev, unsigned char * s, int maxsize) {
 #define BUFSIZE 64
 
 int verifysector512(serial_t * dev,uint32_t addr, uint8_t * data, int size) {
-  uint8_t s[70], buf[32];
-  int i, offset = 0;
+  uint8_t s[70], buf[70], dec[70];
+  int i, j, k, match, offset = 0;
 
   printf("Verify addr 0x%06x: ",addr);
 
-  for (offset = 0; offset < 512; offset += 16) {
-    uint8_t dec[50];
-    int j, k, match;
+  sprintf((char*)s,"R %d 512\r",addr+offset);
+  serial_puts (dev, s);
+  i = recv_line(dev, buf, BUFSIZE);
+  //print_dbg ("commandR:", buf, i);
+  if ((i != 3) || (memcmp(buf,"0\r\n",3) != 0)) {
+    printf(MSG_ERR " at command 'R'\n");
+    print_dbg ("debug:", buf, i);
+    return 0;
+  }
 
-    sprintf((char*)s,"R %d 16\r",addr+offset);
-    serial_puts (dev, s);
-    i = recv_line(dev, buf, BUFSIZE);
-    if ((i != 3) || (memcmp(buf,"0\r\n",3) != 0)) {
-      printf(MSG_ERR " at command 'R'\n");
-      print_dbg ("debug:", buf, i);
-      return 0;
-    }
-
+  while (offset < 512) {
+    printf("."); fflush(stdout);
     i = recv_line(dev, buf, BUFSIZE);
     j = nxp_uudecode_block(buf,dec);
-    if (j != 16) {
+    if (j == 0) {
       printf(MSG_ERR " at decode data %d\n",offset);
       return 0;
     }
 
     match = 1;
-    for (k=0; k<16; k++) {
+    for (k=0; k<j; k++) {
       if (offset+k < size) {
 	if (data[offset+k] != dec[k]) match = 0;
       }
@@ -108,12 +106,17 @@ int verifysector512(serial_t * dev,uint32_t addr, uint8_t * data, int size) {
       return 0;
     }
 
-    i = recv_line(dev, buf, BUFSIZE); /* checksum line */
-
-    serial_puts (dev, (unsigned char*)"OK\r");
-    printf("."); fflush(stdout);
+    offset += j;
 
   }
+
+  /* read the checksum and discard it
+   * it does not make sense to check the checksum if all bytes were
+   * previously compared one-by-one */
+  i = recv_line(dev, buf, BUFSIZE);
+
+  serial_puts (dev, (unsigned char*)"OK\r");
+  printf("."); fflush(stdout);
 
   printf(" " MSG_OK "\n"); fflush(stdout);
   
@@ -223,12 +226,6 @@ int main (int argc, char ** argv) {
     }
   }
 
-  if (strcmp(argv[2],"19200") != 0) {
-    printf(MSG_ERR " please use 19200 bps... this program still does not "
-	   "support other baudrates\n");
-    return 1;    
-  }
-
   initial_addr = strtol(argv[5], NULL, 0);
   if ((initial_addr & 0x1ff) != 0) {
     printf(MSG_ERR " initial address '%d' is not multiple of 512\n",
@@ -241,11 +238,22 @@ int main (int argc, char ** argv) {
     return 1;
   }
 
-  dev = serial_init (argv[1], SERIAL_19200BPS,
-		     SERIAL_BITS_8 | SERIAL_PAR_NONE |
-		     SERIAL_STOP_1 | SERIAL_FLOW_NONE |
-		     SERIAL_AUTOFLUSH);
-  assure(dev != NULL);
+  {
+    int bps;
+    bps = serial_bps(atoi(argv[2]));
+    if (bps == 0) {
+      printf(MSG_ERR " unknown baud rate '%s'\n",argv[2]);
+      return 1;
+    }
+    dev = serial_init (argv[1], bps,
+		       SERIAL_BITS_8 | SERIAL_PAR_NONE |
+		       SERIAL_STOP_1 | SERIAL_FLOW_NONE |
+		       SERIAL_AUTOFLUSH);
+    if (dev == NULL) {
+      printf(MSG_ERR " could not open serial port '%s'\n",argv[1]);
+      return 1;
+    }
+  }
 
   {
     int timeout = 10;

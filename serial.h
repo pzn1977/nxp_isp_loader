@@ -108,4 +108,6 @@ void serial_flush (serial_t * self);
 
 void serial_discard (serial_t * self, int max);
 
+unsigned int serial_bps (int bps);
+
 #endif
