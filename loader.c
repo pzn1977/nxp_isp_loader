@@ -196,6 +196,7 @@ int main (int argc, char ** argv) {
   uint32_t initial_addr = 0;
   int read_only = 0;
   int verify = 1;
+  int erase_all = 0;
 
   if (argc < 6) {
     printf("Usage: %s serial-port serial-bps xtal-khz file.bin initial-address [mode]\n"
@@ -203,6 +204,7 @@ int main (int argc, char ** argv) {
 	   " [mode] can be 'verify' or 'write'\n"
 	   "    write: erase + write. do not read/verify\n"
 	   "    verify: read/verify only\n"
+	   "    erase-all: erase all sectors of chip prior to write\n"
 	   "    without specifying mode: erase + write + verify\n"
 	   "exit status: 0 = ok\n"
 	   "             2 = error at chip detect phase\n"
@@ -216,10 +218,10 @@ int main (int argc, char ** argv) {
   if (argc >= 7) {
     if (strcmp(argv[6],"verify")==0) {
       read_only = 1;
-      verify = 1;
     } else if (strcmp(argv[6],"write")==0) {
-      read_only = 0;
       verify = 0;
+    } else if (strcmp(argv[6],"erase-all")==0) {
+      erase_all = 1;
     } else {
       printf("unknown argument '%s'\n",argv[6]);
       return 1;
@@ -356,20 +358,25 @@ int main (int argc, char ** argv) {
   }
 
   {
-    /* discover initial and final sectors for erasing */
     int sec_first;
     int sec_last;
-    /* int i; */
-    int size = 0;
-    fileread_rewind();
-    while (fileread_getpage512() != NULL) size += 512;
 
-    sec_first = chip_addr2sect (initial_addr);
-    sec_last = chip_addr2sect (initial_addr+size-1);
+    if (erase_all) {
+      sec_first = 0;
+      sec_last = chip_sector_max;
+    } else {
+      /* discover initial and final sectors for erasing */
+      int size = 0;
+      fileread_rewind();
+      while (fileread_getpage512() != NULL) size += 512;
 
-    if ((sec_first < 0) || (sec_last < 0)) {
-      printf(MSG_ERR "flash sector calculate error\n");
-      return 1;
+      sec_first = chip_addr2sect (initial_addr);
+      sec_last = chip_addr2sect (initial_addr+size-1);
+
+      if ((sec_first < 0) || (sec_last < 0)) {
+	printf(MSG_ERR "flash sector calculate error\n");
+	return 1;
+      }
     }
 
 
