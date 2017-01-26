@@ -402,7 +402,12 @@ int main (int argc, char ** argv) {
       i = recv_line(dev, buf, BUFSIZE);
       //print_dbg("recv-erase",buf,i);
       if ((i != 3) || (memcmp(buf,"0\r\n",3) != 0)) {
-	printf(MSG_ERR "\n");
+	if (erase_all) {
+	  printf(MSG_ERR "\n");
+	} else {
+	  printf(MSG_ERR " - maybe CRP is on... "
+		 "try with 'erase-all' argument\n");
+	}
 	return 1;
       }
       printf(MSG_OK "\n");
