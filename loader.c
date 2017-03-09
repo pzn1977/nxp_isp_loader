@@ -188,15 +188,27 @@ int writesector512(serial_t * dev,uint32_t addr, uint8_t * data) {
   return 1;
 }
 
+void serial_destroy_and_init (serial_t ** dev, char * serialport, int bps) {
+  if (*dev != NULL) serial_destroy(*dev);
+  *dev = serial_init (serialport, bps,
+		      SERIAL_BITS_8 | SERIAL_PAR_NONE |
+		      SERIAL_STOP_1 | SERIAL_FLOW_NONE |
+		      SERIAL_AUTOFLUSH);
+  if (*dev == NULL) {
+    printf(MSG_ERR " could not open serial port '%s'\n",serialport);
+    exit(1);
+  }
+}
 
 int main (int argc, char ** argv) {
-  serial_t * dev;
+  serial_t * dev = NULL;
   uint8_t buf[BUFSIZE];
   int i;
   uint32_t initial_addr = 0;
   int read_only = 0;
   int verify = 1;
   int erase_all = 0;
+  int bps;
 
   if (argc < 6) {
     printf("Usage: %s serial-port serial-bps xtal-khz file.bin initial-address [mode]\n"
@@ -240,22 +252,13 @@ int main (int argc, char ** argv) {
     return 1;
   }
 
-  {
-    int bps;
-    bps = serial_bps(atoi(argv[2]));
-    if (bps == 0) {
-      printf(MSG_ERR " unknown baud rate '%s'\n",argv[2]);
-      return 1;
-    }
-    dev = serial_init (argv[1], bps,
-		       SERIAL_BITS_8 | SERIAL_PAR_NONE |
-		       SERIAL_STOP_1 | SERIAL_FLOW_NONE |
-		       SERIAL_AUTOFLUSH);
-    if (dev == NULL) {
-      printf(MSG_ERR " could not open serial port '%s'\n",argv[1]);
-      return 1;
-    }
+  bps = serial_bps(atoi(argv[2]));
+  if (bps == 0) {
+    printf(MSG_ERR " unknown baud rate '%s'\n",argv[2]);
+    return 1;
   }
+
+  serial_destroy_and_init (&dev, argv[1], bps);
 
   {
     int timeout = 10;
@@ -271,6 +274,7 @@ int main (int argc, char ** argv) {
 	}
 	printf("failed. please reset microcontroller!\n");
 	sleep (1);
+	serial_destroy_and_init (&dev, argv[1], bps);
       } else {
 	printf(MSG_OK "\n");
 	timeout = 0;
