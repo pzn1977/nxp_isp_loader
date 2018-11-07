@@ -36,6 +36,8 @@ to **chip.c** and recompile it. It is easy, see the example of LPC1115.
  3. Reset the microcontroller, it will start the UART ISP internal firmware
  4. use the program `nxp_isp_loader` to write/verify the flash memory
 
+See also: **screenshot.png**
+
 ## INSTALL
 
 Compile/install procedure:
