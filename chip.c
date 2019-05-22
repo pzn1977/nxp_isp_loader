@@ -70,6 +70,21 @@ char * chip_flash_configure (uint8_t * s) {
     chip_ram_transfer_addr = 0x10000300; /* a start address of free 512 bytes of RAM to be used as buffer to transfer pages */
   }
 
+  /* LPC1125 ID is 0x150080 = 1376384(decimal) */
+  if (strcmp("1376384",(char*)s) == 0) {
+    int i;
+    /* chip has 16 sectors of 4 kbytes each (all sectors with same size) */
+    ret = strdup("LPC1125");
+    chip_sector_max = 15; /* last sector number */
+    chip_sector = malloc(sizeof(chip_sector)*(chip_sector_max+1));
+    for (i=0; i<=chip_sector_max; i++) {
+      chip_sector[i] = 0x1000 * i; /* initial address of each sector */
+    }
+    chip_addr_min = 0; /* first address of flash memory */
+    chip_addr_max = 0xffff; /* last address of flash memory */
+    chip_ram_transfer_addr = 0x10000300; /* a start address of free 512 bytes of RAM to be used as buffer to transfer pages */
+  }
+
   return ret;
 }
 
