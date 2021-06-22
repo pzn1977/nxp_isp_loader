@@ -31,7 +31,7 @@ to **chip.c** and recompile it. It is easy, see the example of LPC1115.
 ## Hardware procedure
 
  1. connect your computer serial port to TX and RX of the microcontroller
-    (probably by using a MAX232 and/or an USB-Serial converter)
+    (probably by using a MAX232 and/or a USB-Serial converter)
  2. connect the ISP-Start pin to ground (at LPC1115 it is P1.0)
  3. Reset the microcontroller, it will start the UART ISP internal firmware
  4. use the program `nxp_isp_loader` to write/verify the flash memory
@@ -45,10 +45,10 @@ Compile/install procedure:
  - copy the file `nxp_isp_loader` to /usr/local/bin
 
 ## Notes
- - NXP is not related with the development of this program.
- - This is not a official NXP software.
+ - NXP is not related to the development of this program.
+ - This is not an official NXP software.
  - NXP does not endorse its use.
- - Use at your own risk. There are no waranties.
+ - Use at your own risk. There are no warranties.
 
 ## SUPPORT ME
 
