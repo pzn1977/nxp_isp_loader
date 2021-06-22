@@ -155,6 +155,22 @@ char * chip_flash_configure (uint8_t * s) {
     chip_ram_transfer_addr = 0x10000300; /* a start address of free 512 bytes of RAM to be used as buffer to transfer pages */
   }
 
+  /* LPC11U34FBD48/311 ID is 0x03D440 = 250944(decimal)
+   * from NXP UM10462.pdf page 389 table 361 LPC11Uxx device identification numbers */
+  if (strcmp("250944",(char*)s) == 0) {
+    int i;
+    /* chip has 16 sectors of 4 kbytes each (all sectors with same size) */
+    ret = strdup("LPC11U34FBD48/311 or LPC11U34FHN33/311");
+    chip_sector_max = 9; /* last sector number */
+    chip_sector = malloc(sizeof(chip_sector)*(chip_sector_max+1));
+    for (i=0; i<=chip_sector_max; i++) {
+      chip_sector[i] = 0x1000 * i; /* initial address of each sector */
+    }
+    chip_addr_min = 0; /* first address of flash memory */
+    chip_addr_max = 0x9fff; /* last address of flash memory */
+    chip_ram_transfer_addr = 0x10000300; /* a start address of free 512 bytes of RAM to be used as buffer to transfer pages */
+  }
+
   return ret;
 }
 
