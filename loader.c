@@ -294,7 +294,7 @@ int main (int argc, char ** argv) {
 
 
   {
-    int clk;
+    int clk, ok = 0;
     char s[30];
     clk = atoi(argv[3]);
     sprintf(s,"%d\r",clk);
@@ -302,7 +302,11 @@ int main (int argc, char ** argv) {
     serial_puts (dev, (unsigned char*) s);
     i = recv_line(dev, buf, BUFSIZE);
     //print_dbg("recv-clk",buf,i);
-    if ((i < 4) || (memcmp(buf+i-4,"OK\r\n",4) != 0)) {
+    /* according to docs, the chip should answer "OK", however, I got some
+     * chips that answer "Synchronized" in this stage... */
+    if ((i >= 4) && (memcmp(buf+i-4,"OK\r\n",4) == 0)) ok = 1;
+    if ((i >= 14) && (memcmp(buf+i-14,"Synchronized\r\n",14) == 0)) ok = 2;
+    if (ok == 0) {
       printf(MSG_ERR "\n");
       return 1;
     }
