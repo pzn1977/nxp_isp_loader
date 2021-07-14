@@ -200,6 +200,17 @@ void serial_destroy_and_init (serial_t ** dev, char * serialport, int bps) {
   }
 }
 
+int is_a_number(char *s) {
+  int i = 0;
+  if (s[0] == 0) return 0; /* empty string */
+  while (s[i] != 0) {
+    if (s[i] < '0') return 0;
+    if (s[i] > '9') return 0;
+    i++;
+  }
+  return 1; /* non-empty string with only 0-9 chars */
+}
+
 int main (int argc, char ** argv) {
   serial_t * dev = NULL;
   uint8_t buf[BUFSIZE];
@@ -209,18 +220,25 @@ int main (int argc, char ** argv) {
   int verify = 1;
   int erase_all = 0;
   int bps;
+  char * chip_id = NULL;
 
   if (argc < 6) {
-    printf("Usage: %s serial-port serial-bps xtal-khz file.bin initial-address [mode]\n"
+    printf("Usage: %s serial-port serial-bps xtal-khz file.bin initial-address [mode] [chip-id]\n"
 	   "Example: %s /dev/ttyS0 19200 4000 main.bin 0x0000\n"
 	   " [mode] can be 'verify' or 'write'\n"
 	   "    write: erase + write. do not read/verify\n"
 	   "    verify: read/verify only\n"
 	   "    erase-all: erase all sectors of chip prior to write\n"
 	   "    without specifying mode: erase + write + verify\n"
-	   "exit status: 0 = ok\n"
+	   " [chip-id] check chip model (and abort program if mismatch).\n"
+	   "    chip-id is the decimal number found at NXP docs \"part \n"
+	   "    identification numbers\". Example: 654381362 is LPC1774.\n"
+	   "    Hint: use any number to force a mismatch and show detected\n"
+	   "    chip-id, or check 'chip.c' source code.\n"
+	   "Exit status: 0 = ok\n"
 	   "             2 = error at chip detect phase\n"
 	   "             3 = error at compare/verify procedure\n"
+	   "             4 = chip-id mismatch\n"
 	   "             1 = other errors\n"
 	   "Developed by Pedro Zorzenon Neto - www.pzn.com.br\n",
 	   argv[0],argv[0]);
@@ -234,10 +252,27 @@ int main (int argc, char ** argv) {
       verify = 0;
     } else if (strcmp(argv[6],"erase-all")==0) {
       erase_all = 1;
+    } else if (is_a_number(argv[6])) {
+      chip_id = strdup(argv[6]);
     } else {
       printf("unknown argument '%s'\n",argv[6]);
       return 1;
     }
+  }
+
+  if (argc >= 8) {
+    if (is_a_number(argv[7])) {
+      chip_id = strdup(argv[7]);
+    } else {
+      printf("unknown argument '%s'\n",argv[7]);
+      return 1;
+    }
+  }
+
+  if (argc >= 9) {
+    printf("Error: too many command line arguments.\n"
+	   "Run with no arguments to show usage help.\n");
+    return 1;
   }
 
   initial_addr = strtol(argv[5], NULL, 0);
@@ -353,6 +388,14 @@ int main (int argc, char ** argv) {
   }
   printf(" " MSG_OK "\n");
 
+  if (chip_id != NULL) {
+    if (strcmp(chip_id,(char*)buf) != 0) {
+      printf("Chip-id mismatch expect='%s' found='%s' " MSG_ERR "\n",
+	     chip_id, buf);
+      return 4;
+    }
+    printf("Chip-id match '%s' " MSG_OK "\n", chip_id);
+  }
 
   if (read_only == 0) {
     printf("Unlock flash: ");
