@@ -225,10 +225,11 @@ int main (int argc, char ** argv) {
   if (argc < 6) {
     printf("Usage: %s serial-port serial-bps xtal-khz file.bin initial-address [mode] [chip-id]\n"
 	   "Example: %s /dev/ttyS0 19200 4000 main.bin 0x0000\n"
-	   " [mode] can be 'verify' or 'write'\n"
+	   " [mode] operation mode available options:\n"
 	   "    write: erase + write. do not read/verify\n"
 	   "    verify: read/verify only\n"
-	   "    erase-all: erase all sectors of chip prior to write\n"
+	   "    erase-all: erase all sectors of chip prior to write.\n"
+	   "               this is useful to disable previous code-protect.\n"
 	   "    without specifying mode: erase + write + verify\n"
 	   " [chip-id] check chip model (and abort program if mismatch).\n"
 	   "    chip-id is the decimal number found at NXP docs \"part \n"
