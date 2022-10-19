@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "chip.h"
 
@@ -185,6 +186,23 @@ char * chip_flash_configure (uint8_t * s) {
     chip_addr_min = 0; /* first address of flash memory */
     chip_addr_max = 0x5fff; /* last address of flash memory */
     chip_ram_transfer_addr = 0x10000300; /* a start address of free 512 bytes of RAM to be used as buffer to transfer pages */
+  }
+  /* LPC804M101JHI33 ID is 0x00008044 = 32836(decimal) */
+  if ((strcmp("32836",(char*)s) == 0) ||
+      (strcmp("32834",(char*)s) == 0)) {
+    /* https://www.nxp.com/docs/en/user-guide/UM11065.pdf
+     * Section 4.5.12 Read Part Identification number */
+    int i;
+    /* chip has 32 sectors of 1 kbytes each (all sectors with same size) */
+    ret = strdup("LPC804");
+    chip_sector_max = 31; /* last sector number */
+    chip_sector = malloc(sizeof(chip_sector)*(chip_sector_max+1));
+    for (i=0; i<=chip_sector_max; i++) {
+      chip_sector[i] = 0x0400 * i; /* initial address of each sector */
+    }
+    chip_addr_min = 0x0000; /* first address of flash memory */
+    chip_addr_max = 0x7FFF; /* last address of flash memory */
+    chip_ram_transfer_addr = 0x10000100; /* a start address of free 512 bytes of RAM to be used as buffer to transfer pages */
   }
 
   return ret;
