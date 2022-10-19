@@ -6,7 +6,6 @@
 #include <stdbool.h>
 
 #include "serial.h"
-#include "nxp_encode.h"
 #include "chip.h"
 #include "fileread.h"
 
@@ -76,7 +75,7 @@ int verifysector512(serial_t* dev, uint32_t addr, uint8_t* data, int size) {
   while (offset < 512) {
     printf("."); fflush(stdout);
     i = recv_line(dev, buf, BUFSIZE);
-    j = nxp_uudecode_block(buf, dec);
+    j = 0;//nxp_uudecode_block(buf, dec);
     if (j == 0) {
       printf(MSG_ERR " at decode data %d\n",offset);
       return 0;
