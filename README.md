@@ -49,7 +49,3 @@ Compile/install procedure:
  - This is not an official NXP software.
  - NXP does not endorse its use.
  - Use at your own risk. There are no warranties.
-
-## SUPPORT ME
-
- - https://www.buymeacoffee.com/pzn77
